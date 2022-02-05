@@ -2,8 +2,12 @@ package com.example.backendtest.controller;
 
 import com.example.backendtest.model.request.RegisterUserRequest;
 import com.example.backendtest.model.response.TokenResponse;
+import com.example.backendtest.model.response.UserDetailResponse;
 import com.example.backendtest.service.UserService;
+import com.example.backendtest.type.MemberType;
+import com.example.backendtest.utility.Constant;
 import com.example.backendtest.utility.Protocol;
+import com.example.backendtest.utility.Utility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
@@ -111,5 +115,43 @@ public class UserControllerTest {
         Mockito.verify(userService, Mockito.times(1)).transformRegisterUserRequestToUserEntity(Mockito.any());
         Mockito.verify(userService, Mockito.times(1)).saveUser(Mockito.any());
         Mockito.verify(userService, Mockito.times(1)).getUserToken(Mockito.anyString(), Mockito.anyString());
+    }
+
+    @Test
+    public void testGetUserDetailShouldSuccess() throws Exception {
+        String url = Protocol.API_VERSION_1 + Protocol.USER;
+
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders
+                .get(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+
+        Mockito.when(userService.getUserDetail()).thenReturn(mockUserDetailResponse());
+
+        mockMvc.perform(builder).andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.userId", is(1)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.username", is("username")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.fullName", is("fullname")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.address", is("address")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.phone", is("0999999999")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.referenceCode", is("202202056777")))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.salary", is(20000)))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.memberType", is(MemberType.SILVER.getDisplayValue())))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.createDate", is("2022-02-05")));
+        Mockito.verify(userService, Mockito.times(1)).getUserDetail();
+    }
+
+    private UserDetailResponse mockUserDetailResponse() {
+        return UserDetailResponse.builder()
+                .userId(1L)
+                .username("username")
+                .fullName("fullname")
+                .address("address")
+                .phone("0999999999")
+                .referenceCode("202202056777")
+                .salary(20000)
+                .memberType(MemberType.SILVER.getDisplayValue())
+                .createDate("2022-02-05")
+                .build();
     }
 }

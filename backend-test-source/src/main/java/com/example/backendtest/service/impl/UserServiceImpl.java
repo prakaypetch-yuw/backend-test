@@ -141,7 +141,7 @@ public class UserServiceImpl implements UserDetailsService, UserService {
                 .username(user.getUsername())
                 .fullName(user.getFullName())
                 .address(user.getAddress())
-                .phone(user.getReferenceCode())
+                .phone(user.getPhone())
                 .referenceCode(user.getReferenceCode())
                 .salary(user.getSalary())
                 .memberType(MemberType.findDbValue(user.getMemberType()).getDisplayValue())

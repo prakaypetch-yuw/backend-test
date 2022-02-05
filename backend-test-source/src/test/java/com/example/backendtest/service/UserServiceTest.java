@@ -1,10 +1,12 @@
 package com.example.backendtest.service;
 
+import com.example.backendtest.component.UserComponent;
 import com.example.backendtest.config.TokenProvider;
 import com.example.backendtest.model.entity.Role;
 import com.example.backendtest.model.entity.User;
 import com.example.backendtest.model.request.RegisterUserRequest;
 import com.example.backendtest.model.response.TokenResponse;
+import com.example.backendtest.model.response.UserDetailResponse;
 import com.example.backendtest.repository.RoleRepository;
 import com.example.backendtest.repository.UserRepository;
 import com.example.backendtest.service.impl.UserServiceImpl;
@@ -12,7 +14,10 @@ import com.example.backendtest.type.ErrorType;
 import com.example.backendtest.type.MemberType;
 import com.example.backendtest.type.RoleType;
 import com.example.backendtest.utility.ErrorException;
+import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,6 +50,9 @@ public class UserServiceTest {
 
     @Mock
     private TokenProvider jwtTokenUtil;
+
+    @Mock
+    private UserComponent userComponent;
 
     @Test
     public void testValidateRegisterUserRequestShouldErrorWithUserAlreadyExists() throws Exception {
@@ -127,6 +135,23 @@ public class UserServiceTest {
         Assert.assertEquals("tokenx", response.getToken());
     }
 
+    @Test
+    public void testGetUserDetailResponse() throws Exception {
+        Mockito.when(userComponent.getUserId()).thenReturn(1L);
+        Mockito.when(userRepository.findByUserIdAndActiveIsTrue(Mockito.any())).thenReturn(mockUser());
+        UserDetailResponse response = userService.getUserDetail();
+        Assert.assertNotNull(response);
+        Assert.assertEquals(1L, response.getUserId().longValue());
+        Assert.assertEquals("testuser", response.getUsername());
+        Assert.assertEquals("test user", response.getFullName());
+        Assert.assertEquals("apartment", response.getAddress());
+        Assert.assertEquals("0999999999", response.getPhone());
+        Assert.assertEquals("202202056777", response.getReferenceCode());
+        Assert.assertEquals(20000, response.getSalary().intValue());
+        Assert.assertEquals(MemberType.SILVER.getDisplayValue(), response.getMemberType());
+        Assert.assertEquals("2022-02-05", response.getCreateDate());
+    }
+
     private RegisterUserRequest mockRegisterUserRequest() {
         RegisterUserRequest request = new RegisterUserRequest();
         request.setUsername("testuser");
@@ -139,7 +164,10 @@ public class UserServiceTest {
     }
 
     private User mockUser() {
+        DateTimeFormatter format = DateTimeFormat.forPattern("yyyy-MM-dd");
+        DateTime dateTime = format.parseDateTime("2022-02-05");
         return User.builder()
+                .userId(1L)
                 .username("testuser")
                 .password("password")
                 .fullName("test user")
@@ -149,6 +177,7 @@ public class UserServiceTest {
                 .salary(20000)
                 .memberType("silver")
                 .active(true)
+                .createDate(dateTime.toDate())
                 .build();
     }
 

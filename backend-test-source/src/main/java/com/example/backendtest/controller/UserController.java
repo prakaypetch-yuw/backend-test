@@ -40,13 +40,13 @@ public class UserController {
         userService.saveUser(user);
         TokenResponse tokenResponse = userService.getUserToken(request.getUsername(), request.getPassword());
         Response<?> response = new Response<>(tokenResponse);
-        logger.info(Constant.REQUEST_PATTERN, "register success");
+        logger.info(Constant.RESPONSE_PATTERN, "register success");
         return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping(value = Protocol.USER)
-    public ResponseEntity<?> registerUser() throws Exception {
+    public ResponseEntity<?> getUserDetail() throws Exception {
         logger.info(Constant.REQUEST_PATTERN, "get user detail by token");
         UserDetailResponse userDetailResponse = userService.getUserDetail();
         Response<?> response = new Response<>(userDetailResponse);
