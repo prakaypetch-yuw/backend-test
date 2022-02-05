@@ -14,4 +14,5 @@ public class Constant {
     public static final String SIGNING_KEY = "${jwt.signing.key}";
     public static final String AUTHORITIES_KEY = "${jwt.authorities.key}";
 
+    public static final String DATE_FORMAT_RESPONSE = "yyyy-MM-dd";
 }

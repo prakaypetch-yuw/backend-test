@@ -28,4 +28,13 @@ public enum MemberType {
             return UNKNOWN;
         }
     }
+
+    public static MemberType findDbValue(String dbValue) {
+        for (MemberType type : MemberType.values()) {
+            if (type.getDbValue().equals(dbValue)) {
+                return type;
+            }
+        }
+        return UNKNOWN;
+    }
 }

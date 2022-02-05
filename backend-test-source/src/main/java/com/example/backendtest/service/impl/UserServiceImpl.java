@@ -1,10 +1,12 @@
 package com.example.backendtest.service.impl;
 
+import com.example.backendtest.component.UserComponent;
 import com.example.backendtest.config.TokenProvider;
 import com.example.backendtest.model.entity.Role;
 import com.example.backendtest.model.entity.User;
 import com.example.backendtest.model.request.RegisterUserRequest;
 import com.example.backendtest.model.response.TokenResponse;
+import com.example.backendtest.model.response.UserDetailResponse;
 import com.example.backendtest.repository.RoleRepository;
 import com.example.backendtest.repository.UserRepository;
 import com.example.backendtest.service.UserService;
@@ -16,7 +18,6 @@ import com.example.backendtest.utility.ErrorException;
 import com.example.backendtest.utility.Utility;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -48,15 +49,17 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 
     private final TokenProvider jwtTokenUtil;
 
-    @Autowired
+    private final UserComponent userComponent;
+
     public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bcryptEncoder,
                            RoleRepository roleRepository, @Lazy AuthenticationManager authenticationManager,
-                           TokenProvider jwtTokenUtil) {
+                           TokenProvider jwtTokenUtil, UserComponent userComponent) {
         this.userRepository = userRepository;
         this.bcryptEncoder = bcryptEncoder;
         this.roleRepository = roleRepository;
         this.authenticationManager = authenticationManager;
         this.jwtTokenUtil = jwtTokenUtil;
+        this.userComponent = userComponent;
     }
 
     public UserDetails loadUserByUsername(String username) {
@@ -123,5 +126,28 @@ public class UserServiceImpl implements UserDetailsService, UserService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtTokenUtil.generateToken(authentication);
         return new TokenResponse(token);
+    }
+
+    @Override
+    public UserDetailResponse getUserDetail() throws Exception {
+        User user = userRepository.findByUserIdAndActiveIsTrue(userComponent.getUserId());
+        if (Objects.isNull(user)) {
+            logger.error(Constant.EXCEPTION_PATTERN, ErrorType.USER_NOT_FOUND.getMessage());
+            throw new ErrorException(ErrorType.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+        }
+
+        return UserDetailResponse.builder()
+                .userId(user.getUserId())
+                .username(user.getUsername())
+                .fullName(user.getFullName())
+                .address(user.getAddress())
+                .phone(user.getReferenceCode())
+                .referenceCode(user.getReferenceCode())
+                .salary(user.getSalary())
+                .memberType(MemberType.findDbValue(user.getMemberType()).getDisplayValue())
+                .createDate(
+                        Utility.convertTimeStampToDisplayDateTime(user.getCreateDate().getTime(),
+                                Constant.DATE_FORMAT_RESPONSE))
+                .build();
     }
 }
