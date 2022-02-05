@@ -1,7 +1,9 @@
 package com.example.backendtest.controller;
 
+import com.example.backendtest.model.Response;
 import com.example.backendtest.model.entity.User;
 import com.example.backendtest.model.request.RegisterUserRequest;
+import com.example.backendtest.model.response.TokenResponse;
 import com.example.backendtest.service.UserService;
 import com.example.backendtest.utility.Constant;
 import com.example.backendtest.utility.Protocol;
@@ -33,7 +35,9 @@ public class UserController {
         userService.validateRegisterUserRequest(request);
         User user = userService.transformRegisterUserRequestToUserEntity(request);
         userService.saveUser(user);
+        TokenResponse tokenResponse = userService.getUserToken(request.getUsername(), request.getPassword());
+        Response<?> response = new Response<>(tokenResponse);
         logger.info(Constant.REQUEST_PATTERN, "register success");
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(response);
     }
 }

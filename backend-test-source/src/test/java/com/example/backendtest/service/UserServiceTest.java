@@ -1,11 +1,16 @@
 package com.example.backendtest.service;
 
+import com.example.backendtest.config.TokenProvider;
+import com.example.backendtest.model.entity.Role;
 import com.example.backendtest.model.entity.User;
 import com.example.backendtest.model.request.RegisterUserRequest;
+import com.example.backendtest.model.response.TokenResponse;
+import com.example.backendtest.repository.RoleRepository;
 import com.example.backendtest.repository.UserRepository;
 import com.example.backendtest.service.impl.UserServiceImpl;
 import com.example.backendtest.type.ErrorType;
 import com.example.backendtest.type.MemberType;
+import com.example.backendtest.type.RoleType;
 import com.example.backendtest.utility.ErrorException;
 import org.joda.time.DateTimeUtils;
 import org.junit.Assert;
@@ -15,7 +20,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceTest {
@@ -27,6 +36,15 @@ public class UserServiceTest {
 
     @Mock
     private BCryptPasswordEncoder bcryptEncoder;
+
+    @Mock
+    private RoleRepository roleRepository;
+
+    @Mock
+    private AuthenticationManager authenticationManager;
+
+    @Mock
+    private TokenProvider jwtTokenUtil;
 
     @Test
     public void testValidateRegisterUserRequestShouldErrorWithUserAlreadyExists() throws Exception {
@@ -76,6 +94,7 @@ public class UserServiceTest {
         DateTimeUtils.setCurrentMillisFixed(1643945881000L);
 
         Mockito.when(bcryptEncoder.encode(Mockito.anyString())).thenReturn("xxxxxx");
+        Mockito.when(roleRepository.findByName(Mockito.anyString())).thenReturn(mockRoleUser());
         User user = userService.transformRegisterUserRequestToUserEntity(mockRegisterUserRequest());
         Assert.assertEquals("testuser", user.getUsername());
         Assert.assertEquals("xxxxxx", user.getPassword());
@@ -86,12 +105,26 @@ public class UserServiceTest {
         Assert.assertEquals(100000, user.getSalary().intValue());
         Assert.assertEquals(MemberType.PLATINUM.getDbValue(), user.getMemberType());
         Assert.assertTrue(user.getActive());
+        Assert.assertEquals(1, user.getRoles().size());
+        List<Role> roleList = new ArrayList<>(user.getRoles());
+        Assert.assertEquals(1, roleList.get(0).getRoleId().intValue());
+        Assert.assertEquals(RoleType.USER.getName(), roleList.get(0).getName());
     }
 
     @Test
     public void testSaveUserShouldSuccess() throws Exception {
         userService.saveUser(mockUser());
         Mockito.verify(userRepository, Mockito.times(1)).save(Mockito.any());
+    }
+
+    @Test
+    public void testGetUserTokenShouldSuccess() throws Exception {
+        Mockito.when(jwtTokenUtil.generateToken(Mockito.any())).thenReturn("tokenx");
+        TokenResponse response = userService.getUserToken("username", "password");
+        Mockito.verify(authenticationManager, Mockito.times(1)).authenticate(Mockito.any());
+        Mockito.verify(jwtTokenUtil, Mockito.times(1)).generateToken(Mockito.any());
+        Assert.assertNotNull(response);
+        Assert.assertEquals("tokenx", response.getToken());
     }
 
     private RegisterUserRequest mockRegisterUserRequest() {
@@ -117,5 +150,13 @@ public class UserServiceTest {
                 .memberType("silver")
                 .active(true)
                 .build();
+    }
+
+    private Role mockRoleUser() {
+        Role role = new Role();
+        role.setRoleId(1);
+        role.setName("USER");
+        role.setDescription("user role");
+        return role;
     }
 }

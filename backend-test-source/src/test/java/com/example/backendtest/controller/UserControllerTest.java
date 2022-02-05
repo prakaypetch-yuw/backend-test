@@ -1,6 +1,7 @@
 package com.example.backendtest.controller;
 
 import com.example.backendtest.model.request.RegisterUserRequest;
+import com.example.backendtest.model.response.TokenResponse;
 import com.example.backendtest.service.UserService;
 import com.example.backendtest.utility.Protocol;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,16 +19,16 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import static org.hamcrest.Matchers.is;
+
 @RunWith(MockitoJUnitRunner.class)
 public class UserControllerTest {
+    private final ObjectMapper mapper = new ObjectMapper();
     @InjectMocks
     private UserController userController;
-
     @Mock
     private UserService userService;
-
     private MockMvc mockMvc;
-    private final ObjectMapper mapper = new ObjectMapper();
 
     @Before
     public void setup() {
@@ -58,6 +59,7 @@ public class UserControllerTest {
         Mockito.verify(userService, Mockito.times(0)).validateRegisterUserRequest(Mockito.any());
         Mockito.verify(userService, Mockito.times(0)).transformRegisterUserRequestToUserEntity(Mockito.any());
         Mockito.verify(userService, Mockito.times(0)).saveUser(Mockito.any());
+        Mockito.verify(userService, Mockito.times(0)).getUserToken(Mockito.anyString(), Mockito.anyString());
     }
 
     @Test
@@ -82,6 +84,7 @@ public class UserControllerTest {
         Mockito.verify(userService, Mockito.times(0)).validateRegisterUserRequest(Mockito.any());
         Mockito.verify(userService, Mockito.times(0)).transformRegisterUserRequestToUserEntity(Mockito.any());
         Mockito.verify(userService, Mockito.times(0)).saveUser(Mockito.any());
+        Mockito.verify(userService, Mockito.times(0)).getUserToken(Mockito.anyString(), Mockito.anyString());
     }
 
     @Test
@@ -100,10 +103,13 @@ public class UserControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(request));
+        Mockito.when(userService.getUserToken(Mockito.anyString(), Mockito.anyString())).thenReturn(new TokenResponse("tokenx"));
 
-        mockMvc.perform(builder).andExpect(MockMvcResultMatchers.status().isOk());
+        mockMvc.perform(builder).andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.data.token", is("tokenx")));
         Mockito.verify(userService, Mockito.times(1)).validateRegisterUserRequest(Mockito.any());
         Mockito.verify(userService, Mockito.times(1)).transformRegisterUserRequestToUserEntity(Mockito.any());
         Mockito.verify(userService, Mockito.times(1)).saveUser(Mockito.any());
+        Mockito.verify(userService, Mockito.times(1)).getUserToken(Mockito.anyString(), Mockito.anyString());
     }
 }

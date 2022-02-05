@@ -1,33 +1,78 @@
 package com.example.backendtest.service.impl;
 
+import com.example.backendtest.config.TokenProvider;
+import com.example.backendtest.model.entity.Role;
 import com.example.backendtest.model.entity.User;
 import com.example.backendtest.model.request.RegisterUserRequest;
+import com.example.backendtest.model.response.TokenResponse;
+import com.example.backendtest.repository.RoleRepository;
 import com.example.backendtest.repository.UserRepository;
 import com.example.backendtest.service.UserService;
 import com.example.backendtest.type.ErrorType;
 import com.example.backendtest.type.MemberType;
+import com.example.backendtest.type.RoleType;
 import com.example.backendtest.utility.Constant;
 import com.example.backendtest.utility.ErrorException;
 import com.example.backendtest.utility.Utility;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 @Service(value = "userService")
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserDetailsService, UserService {
     private final Logger logger = LogManager.getLogger(this.getClass());
 
     private final UserRepository userRepository;
 
     private final BCryptPasswordEncoder bcryptEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bcryptEncoder) {
+    private final RoleRepository roleRepository;
+
+    private final AuthenticationManager authenticationManager;
+
+    private final TokenProvider jwtTokenUtil;
+
+    @Autowired
+    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bcryptEncoder,
+                           RoleRepository roleRepository, @Lazy AuthenticationManager authenticationManager,
+                           TokenProvider jwtTokenUtil) {
         this.userRepository = userRepository;
         this.bcryptEncoder = bcryptEncoder;
+        this.roleRepository = roleRepository;
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenUtil = jwtTokenUtil;
+    }
+
+    public UserDetails loadUserByUsername(String username) {
+        User user = userRepository.findTopByUsernameAndActiveIsTrue(username);
+        if (Objects.isNull(user)) {
+            throw new UsernameNotFoundException("Invalid username or password.");
+        }
+        return new org.springframework.security.core.userdetails.User(user.getUsername(),
+                user.getPassword(),
+                getAuthority(user));
+    }
+
+    private Set<SimpleGrantedAuthority> getAuthority(User users) {
+        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+        users.getRoles().forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName())));
+        return authorities;
     }
 
     @Override
@@ -50,6 +95,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User transformRegisterUserRequestToUserEntity(RegisterUserRequest request) {
+        Set<Role> roleSet = new HashSet<>();
+        roleSet.add(roleRepository.findByName(RoleType.USER.getName()));
+
         return User.builder()
                 .username(request.getUsername())
                 .password(bcryptEncoder.encode(request.getPassword()))
@@ -60,6 +108,20 @@ public class UserServiceImpl implements UserService {
                 .salary(request.getSalary())
                 .memberType(MemberType.findTypeBySalary(request.getSalary()).getDbValue())
                 .active(true)
+                .roles(roleSet)
                 .build();
+    }
+
+    @Override
+    public TokenResponse getUserToken(String username, String password) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        username,
+                        password
+                )
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String token = jwtTokenUtil.generateToken(authentication);
+        return new TokenResponse(token);
     }
 }
