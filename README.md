@@ -18,6 +18,7 @@ Steps to run app:
 
         docker-compose up
     This will take a few minutes.
+
 2. Once everything has started up, you should be able to access the service via http://localhost:6868/actuator/health on your host machine.
 
         curl --location --request GET 'http://localhost:6868/actuator/health'
