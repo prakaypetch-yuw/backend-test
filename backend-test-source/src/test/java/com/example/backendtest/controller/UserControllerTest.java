@@ -5,17 +5,15 @@ import com.example.backendtest.model.response.TokenResponse;
 import com.example.backendtest.model.response.UserDetailResponse;
 import com.example.backendtest.service.UserService;
 import com.example.backendtest.type.MemberType;
-import com.example.backendtest.utility.Constant;
 import com.example.backendtest.utility.Protocol;
-import com.example.backendtest.utility.Utility;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -25,16 +23,18 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.hamcrest.Matchers.is;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class UserControllerTest {
     private final ObjectMapper mapper = new ObjectMapper();
+
     @InjectMocks
     private UserController userController;
+
     @Mock
     private UserService userService;
     private MockMvc mockMvc;
 
-    @Before
+    @BeforeEach
     public void setup() {
         userController = new UserController(userService);
         mockMvc = MockMvcBuilders.standaloneSetup(userController)

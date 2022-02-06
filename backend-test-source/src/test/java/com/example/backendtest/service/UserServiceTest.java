@@ -18,20 +18,20 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeUtils;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
     @InjectMocks
     private UserServiceImpl userService;
@@ -61,12 +61,12 @@ public class UserServiceTest {
         try {
             userService.validateRegisterUserRequest(mockRegisterUserRequest());
         } catch (Exception e) {
-            Assert.assertEquals(ErrorException.class, e.getClass());
+            Assertions.assertEquals(ErrorException.class, e.getClass());
             errorException = (ErrorException) e;
         }
-        Assert.assertNotNull(errorException);
-        Assert.assertEquals(ErrorType.USER_ALREADY_EXISTS.getCode(), errorException.getCode());
-        Assert.assertEquals(ErrorType.USER_ALREADY_EXISTS.getMessage(), errorException.getMessage());
+        Assertions.assertNotNull(errorException);
+        Assertions.assertEquals(ErrorType.USER_ALREADY_EXISTS.getCode(), errorException.getCode());
+        Assertions.assertEquals(ErrorType.USER_ALREADY_EXISTS.getMessage(), errorException.getMessage());
     }
 
     @Test
@@ -77,12 +77,12 @@ public class UserServiceTest {
         try {
             userService.validateRegisterUserRequest(request);
         } catch (Exception e) {
-            Assert.assertEquals(ErrorException.class, e.getClass());
+            Assertions.assertEquals(ErrorException.class, e.getClass());
             errorException = (ErrorException) e;
         }
-        Assert.assertNotNull(errorException);
-        Assert.assertEquals(ErrorType.INVALID_SALARY.getCode(), errorException.getCode());
-        Assert.assertEquals(ErrorType.INVALID_SALARY.getMessage(), errorException.getMessage());
+        Assertions.assertNotNull(errorException);
+        Assertions.assertEquals(ErrorType.INVALID_SALARY.getCode(), errorException.getCode());
+        Assertions.assertEquals(ErrorType.INVALID_SALARY.getMessage(), errorException.getMessage());
     }
 
     @Test
@@ -91,10 +91,10 @@ public class UserServiceTest {
         try {
             userService.validateRegisterUserRequest(mockRegisterUserRequest());
         } catch (Exception e) {
-            Assert.assertEquals(ErrorException.class, e.getClass());
+            Assertions.assertEquals(ErrorException.class, e.getClass());
             errorException = (ErrorException) e;
         }
-        Assert.assertNull(errorException);
+        Assertions.assertNull(errorException);
     }
 
     @Test
@@ -104,19 +104,19 @@ public class UserServiceTest {
         Mockito.when(bcryptEncoder.encode(Mockito.anyString())).thenReturn("xxxxxx");
         Mockito.when(roleRepository.findByName(Mockito.anyString())).thenReturn(mockRoleUser());
         User user = userService.transformRegisterUserRequestToUserEntity(mockRegisterUserRequest());
-        Assert.assertEquals("testuser", user.getUsername());
-        Assert.assertEquals("xxxxxx", user.getPassword());
-        Assert.assertEquals("test user", user.getFullName());
-        Assert.assertEquals("apartment", user.getAddress());
-        Assert.assertEquals("0999999999", user.getPhone());
-        Assert.assertEquals("202202049999", user.getReferenceCode());
-        Assert.assertEquals(100000, user.getSalary().intValue());
-        Assert.assertEquals(MemberType.PLATINUM.getDbValue(), user.getMemberType());
-        Assert.assertTrue(user.getActive());
-        Assert.assertEquals(1, user.getRoles().size());
+        Assertions.assertEquals("testuser", user.getUsername());
+        Assertions.assertEquals("xxxxxx", user.getPassword());
+        Assertions.assertEquals("test user", user.getFullName());
+        Assertions.assertEquals("apartment", user.getAddress());
+        Assertions.assertEquals("0999999999", user.getPhone());
+        Assertions.assertEquals("202202049999", user.getReferenceCode());
+        Assertions.assertEquals(100000, user.getSalary().intValue());
+        Assertions.assertEquals(MemberType.PLATINUM.getDbValue(), user.getMemberType());
+        Assertions.assertTrue(user.getActive());
+        Assertions.assertEquals(1, user.getRoles().size());
         List<Role> roleList = new ArrayList<>(user.getRoles());
-        Assert.assertEquals(1, roleList.get(0).getRoleId().intValue());
-        Assert.assertEquals(RoleType.USER.getName(), roleList.get(0).getName());
+        Assertions.assertEquals(1, roleList.get(0).getRoleId().intValue());
+        Assertions.assertEquals(RoleType.USER.getName(), roleList.get(0).getName());
     }
 
     @Test
@@ -131,8 +131,8 @@ public class UserServiceTest {
         TokenResponse response = userService.getUserToken("username", "password");
         Mockito.verify(authenticationManager, Mockito.times(1)).authenticate(Mockito.any());
         Mockito.verify(jwtTokenUtil, Mockito.times(1)).generateToken(Mockito.any());
-        Assert.assertNotNull(response);
-        Assert.assertEquals("tokenx", response.getToken());
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals("tokenx", response.getToken());
     }
 
     @Test
@@ -140,16 +140,16 @@ public class UserServiceTest {
         Mockito.when(userComponent.getUserId()).thenReturn(1L);
         Mockito.when(userRepository.findByUserIdAndActiveIsTrue(Mockito.any())).thenReturn(mockUser());
         UserDetailResponse response = userService.getUserDetail();
-        Assert.assertNotNull(response);
-        Assert.assertEquals(1L, response.getUserId().longValue());
-        Assert.assertEquals("testuser", response.getUsername());
-        Assert.assertEquals("test user", response.getFullName());
-        Assert.assertEquals("apartment", response.getAddress());
-        Assert.assertEquals("0999999999", response.getPhone());
-        Assert.assertEquals("202202056777", response.getReferenceCode());
-        Assert.assertEquals(20000, response.getSalary().intValue());
-        Assert.assertEquals(MemberType.SILVER.getDisplayValue(), response.getMemberType());
-        Assert.assertEquals("2022-02-05", response.getCreateDate());
+        Assertions.assertNotNull(response);
+        Assertions.assertEquals(1L, response.getUserId().longValue());
+        Assertions.assertEquals("testuser", response.getUsername());
+        Assertions.assertEquals("test user", response.getFullName());
+        Assertions.assertEquals("apartment", response.getAddress());
+        Assertions.assertEquals("0999999999", response.getPhone());
+        Assertions.assertEquals("202202056777", response.getReferenceCode());
+        Assertions.assertEquals(20000, response.getSalary().intValue());
+        Assertions.assertEquals(MemberType.SILVER.getDisplayValue(), response.getMemberType());
+        Assertions.assertEquals("2022-02-05", response.getCreateDate());
     }
 
     private RegisterUserRequest mockRegisterUserRequest() {
